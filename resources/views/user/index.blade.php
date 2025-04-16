@@ -50,7 +50,7 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($user as $item)
-                              
+                                @if($item->email != "adminmaster@gmail.com")
                                         <tr>
                                             <th>{{ $loop->iteration }}</th>
                                             <th>{{ $item->email }}</th>
@@ -65,7 +65,7 @@
                                                 </form>
                                             </td>
                                         </tr>
-                                      
+                                        @endif
                                     @endforeach
                                 </tbody>
                             </table>
