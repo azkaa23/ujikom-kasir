@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\PDF;
 use App\Exports\CustomerExport;
 use App\Models\Pembelian;
+use App\Models\User;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -153,7 +154,6 @@ class PembelianController extends Controller
                 Log::info('Total point sebelum ditambah: ' . $customer->total_point);
                 Log::info('Point dari transaksi: ' . $transaction->point);
             
-                $customer->total_point += $transaction->point;
             
                 Log::info('Total point setelah ditambah: ' . $customer->total_point);
             
@@ -210,6 +210,7 @@ class PembelianController extends Controller
         $customer = $transaction->customer;
         $transactionCount = Pembelian::where('customer_id', $customer->id)->count();
 
+        
         return view('pembelian.member', [
             'transaction' => $transaction,
             'transactionDetails' => $transactionDetails,
@@ -247,9 +248,18 @@ class PembelianController extends Controller
             $customer->save();
     
             $transaction->used_point = $used_point;
-            $transaction->total_price -= $used_point;
-            $transaction->total_payment -= $transaction->total_price;
+            $totalPrice = $transaction->total_price -= $used_point;
+            $transaction->total_payment -= $totalPrice; 
             $transaction->total_return += $transaction->point;
+            $transaction->save();
+
+            $customer->total_point += $transaction->point;
+            $customer->save();
+        } else {
+            // Tambahkan point dari transaksi ke total_point customer
+            // Hanya jika tidak menggunakan poin
+            $customer->total_point += $transaction->point;
+            $customer->save();
         }
     
         $transaction->customer_id = $customer->id;
@@ -290,51 +300,95 @@ class PembelianController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function showDasboard()
-    {
-        $todaySalesCount = null;
-        $lastTransactionTime = null;
-        $chartData = [];
     
-        if (Auth::user()->role == 'employe') {
-            $todaySalesCount = Pembelian::whereDate('created_at', Carbon::today())->count();
-    
-            $lastTransaction = Pembelian::latest()->first();
-            $lastTransactionTime = $lastTransaction ? $lastTransaction->created_at->format('d M Y H:i') : 'Belum ada transaksi';
-        }
-    
-        $startDate = Carbon::now()->subDays(12)->startOfDay();
-        $endDate = Carbon::now()->endOfDay();
-    
-        $transactions = DB::table('pembelians')
-            ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(*) as count'))
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->groupBy('date')
-            ->orderBy('date', 'asc')
-            ->get()
-            ->keyBy('date');
-    
-        for ($i = 0; $i < 13; $i++) {
-            $date = Carbon::now()->subDays(12 - $i)->toDateString();
-            $chartData[] = [
-                'date' => Carbon::parse($date)->format('d F Y'),
-                'count' => $transactions->has($date) ? $transactions[$date]->count : 0
-            ];
-        }
-        
-         // Ambil data penjualan produk untuk pie chart
-        $productSales = DB::table('transaction_details')
-        ->join('produks', 'transaction_details.produk_id', '=', 'produks.id')
-        ->select('produks.nama_produk', DB::raw('SUM(transaction_details.quantity) as total_terjual'))
-        ->groupBy('produks.nama_produk')
-        ->orderByDesc('total_terjual')
-        ->get();
-
-        // Siapkan data untuk chart
-        $productLabels = $productSales->pluck('nama_produk');
-        $productData = $productSales->pluck('total_terjual');
-    
-        return view('home', compact('todaySalesCount', 'lastTransactionTime', 'chartData', 'productLabels', 'productData'));
-    }
+     public function showDasboard()
+     {
+         $todaySalesCount = null;
+         $lastTransactionTime = null;
+         $chartData = [];
+     
+         if (Auth::user()->role == 'employe') {
+             $todaySalesCount = Pembelian::whereDate('created_at', Carbon::today())->count();
+     
+             $lastTransaction = Pembelian::latest()->first();
+             $lastTransactionTime = $lastTransaction ? $lastTransaction->created_at->format('d M Y H:i') : 'Belum ada transaksi';
+         }
+     
+         // Data untuk chart transaksi harian
+         $startDate = Carbon::now()->subDays(12)->startOfDay();
+         $endDate = Carbon::now()->endOfDay();
+     
+         $transactions = DB::table('pembelians')
+             ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(*) as count'))
+             ->whereBetween('created_at', [$startDate, $endDate])
+             ->groupBy('date')
+             ->orderBy('date', 'asc')
+             ->get()
+             ->keyBy('date');
+     
+         for ($i = 0; $i < 13; $i++) {
+             $date = Carbon::now()->subDays(12 - $i)->toDateString();
+             $chartData[] = [
+                 'date' => Carbon::parse($date)->format('d F Y'),
+                 'count' => $transactions->has($date) ? $transactions[$date]->count : 0
+             ];
+         }
+     
+         // Data untuk pie chart produk
+         $productSales = DB::table('transaction_details')
+             ->join('produks', 'transaction_details.produk_id', '=', 'produks.id')
+             ->select('produks.nama_produk', DB::raw('SUM(transaction_details.quantity) as total_terjual'))
+             ->groupBy('produks.nama_produk')
+             ->orderByDesc('total_terjual')
+             ->get();
+     
+         $productLabels = $productSales->pluck('nama_produk');
+         $productData = $productSales->pluck('total_terjual');
+     
+         // Data untuk chart produk (myChart3)
+         $totalProduk = Produk::count();
+         $produkData = Produk::select('nama_produk', 'stok')
+             ->orderBy('stok', 'desc')
+             ->limit(10)
+             ->get();
+     
+         $produkLabels = $produkData->pluck('nama_produk');
+         $produkStokData = $produkData->pluck('stok');
+     
+         // Data untuk chart user (myChart4)
+         $totalUser = User::count();
+         $userNames = User::pluck('nama');
+     
+         // Data untuk chart member vs non-member
+         $memberVsNonMember = DB::table('pembelians')
+             ->selectRaw('
+                 CASE 
+                     WHEN customer_id IS NOT NULL THEN "Member"
+                     ELSE "Non Member"
+                 END as kategori,
+                 COUNT(*) as jumlah
+             ')
+             ->groupBy('kategori')
+             ->get();
+     
+         $memberLabels = $memberVsNonMember->pluck('kategori');
+         $memberCounts = $memberVsNonMember->pluck('jumlah');
+     
+         return view('home', compact(
+             'todaySalesCount', 
+             'lastTransactionTime', 
+             'chartData', 
+             'productLabels', 
+             'productData',
+             'totalProduk',
+             'produkLabels',
+             'produkStokData',
+             'totalUser',
+             'userNames',
+             'memberLabels',      // Ditambahkan
+             'memberCounts'       // Ditambahkan
+         ));
+     }
+     
     
 }

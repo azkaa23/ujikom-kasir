@@ -1,12 +1,14 @@
 <?php
 
             namespace App\Http\Controllers;
-            
-            use Illuminate\Http\Request;
+
+use App\Exports\UserExport;
+use Illuminate\Http\Request;
             use Illuminate\Support\Facades\Auth;
             use Illuminate\Support\Facades\Hash;
             use App\Models\User;
-            
+use Maatwebsite\Excel\Facades\Excel;
+
             class UserController extends Controller
             {
                 /**
@@ -125,5 +127,10 @@
                 {
                     Auth::logout();
                     return redirect()->route('login')->with('logout', 'Anda Berhasil Logout');
+                }
+
+                public function exportExcel()
+                {
+                    return Excel::download(new UserExport, 'Laporan-User.xlsx');
                 }
             }

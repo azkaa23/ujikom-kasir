@@ -134,10 +134,10 @@
                                                 <div class="col-3"><b>Sub Total</b></div>
                                             </div>
                                             @foreach ($item->details as $detail)
-                                            <div class="row mb-1">
-                                                <div class="col-3">{{ $detail->produk->nama_produk }}</div>
+                                            <div class="row mb-3">
+                                                <div class="col-3">{{ $detail->produk ? $detail->produk->nama_produk : 'Produk Sudah di hapus' }}</div>
                                                 <div class="col-3">{{ $detail->quantity }}</div>
-                                                <div class="col-3">Rp.{{ number_format($detail->produk->harga, 0, ',', '.') }}</div>
+                                                <div class="col-3">Rp.{{ $detail->produk && $detail->produk->harga ? number_format($detail->produk->harga, 0, ',', '.') : '0' }}</div>
                                                 <div class="col-3">Rp.{{ number_format($detail->sub_total, 0, ',', '.') }}</div>
                                             </div>
                                             @endforeach
@@ -147,8 +147,10 @@
                                             </div>
                                             <div class="row mt-3">
                                                 <center>
-                                                    Dibuat pada : {{ $item->created_at }}  <br> Oleh : {{ $item->user ? $item->user->nama : 'Tidak Diketahui' }}
-
+                                                    Dibuat pada :  {{ \Carbon\Carbon::now()->timezone('Asia/Jakarta')->translatedFormat('d F Y H:i:s') }}  <br> Oleh : {{ $item->user ? $item->user->nama : 'Tidak Diketahui' }}
+                                                   
+                                                    
+                                                             
                                                 </center>
                                             </div>
                                         </div>
@@ -160,16 +162,15 @@
                             </div>
                             @endforeach
 
-                            <!-- Pagination -->
                             <div class="d-flex justify-content-between align-items-center mt-3">
                                 <div>
                                     Menampilkan {{ $sale->firstItem() }} - {{ $sale->lastItem() }} dari total {{ $sale->total() }} data
                                 </div>
+                            
                                 <div>
-                                    {{ $sale->appends(request()->except('page'))->links() }}
+                                    {{ $sale->appends(request()->except('page'))->links('pagination::bootstrap-5') }}
                                 </div>
                             </div>
-
                         </div> <!-- /table-responsive -->
                     </div> <!-- /card-body -->
                 </div> <!-- /card -->

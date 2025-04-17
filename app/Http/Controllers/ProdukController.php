@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ProdukExport;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use App\Models\Produk;
 use Illuminate\Support\Facades\File;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProdukController extends Controller
 {
@@ -141,5 +143,10 @@ class ProdukController extends Controller
         $produk->save();
 
         return redirect()->route('produk.index')->with('success', 'Stok berhasil diperbarui!');
+    }
+
+    public function export() 
+    {
+        return Excel::download(new ProdukExport, 'data-produk.xlsx');
     }
 }

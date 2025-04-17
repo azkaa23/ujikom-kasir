@@ -1,3 +1,5 @@
+web.blade.php
+
 <?php
 
                 use Illuminate\Support\Facades\Route;
@@ -40,6 +42,7 @@
                         Route::get('/edit/{id}', [UserController::class, 'edit'])->name('edit');
                         Route::patch('/update/{id}', [UserController::class, 'update'])->name('update');
                         Route::delete('/delete/{id}', [UserController::class, 'destroy'])->name('destroy');
+                        Route::get('/export-User', [UserController::class, 'exportExcel'])->name('exportExcel');
                     });
                 });
                 
@@ -51,6 +54,7 @@
                     Route::patch('/produk/update/{id}', [ProdukController::class, 'update'])->name('update');
                     Route::delete('/delete/{id}', [ProdukController::class, 'destroy'])->name('destroy');
                     Route::put('/update-stok/{id}', [ProdukController::class, 'updateStock'])->name('stok');
+                    Route::get('/produk/export', [ProdukController::class, 'export'])->name('produk.export');
                 });
                 
                 Route::prefix('/ukk-kasir')->name('pembelian.')->group(function(){

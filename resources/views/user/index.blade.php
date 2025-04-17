@@ -34,7 +34,13 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-body">
+                        <div class="col-6">
+                            <a href="{{ route('user.exportExcel')}}" class="btn btn-info">
+                                Export User (.xlsx)
+                            </a>
+                        </div>
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                   
                         <a class="btn btn-primary" href="{{ route('user.create')}}">Tambah User</a>
                       </div>
                         <div class="table-responsive">

@@ -50,7 +50,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h2>KASIR</h2>
+            <h2>Struk Pembelian</h2>
         </div>
         <div class="member-info">
             <p>Member Status : {{ $transaction->customer ? 'Member' : 'NON-MEMBER' }}</p>
@@ -80,11 +80,13 @@
         </table>
         <div class="total">
             <p><strong>Total Harga</strong></p>
-            <p>Rp.{{ number_format($transaction->total_price, 0, ',', '.') }}</p>
+            <p>Rp.{{ number_format($hargaBeforePoint, 0, ',', '.') }}</p>
+            <p><strong>Poin yang digunakan</strong></p>
+            <p>Rp.{{ number_format($transaction->customer->total_point ?? '-') }}</p>
             <p><strong>Harga Setelah Poin</strong></p>
             <p>Rp.{{ number_format($transaction->total_price, 0, ',', '.') }}</p>
             <p><strong>Total Kembalian</strong></p>
-            <p>Rp.{{ number_format($hargaBeforePoint, 0, ',', '.') }}</p>
+            <p>Rp.{{ number_format($transaction->total_return, 0, ',', '.') }}</p>
         </div>
         <div class="footer">
             <p id="current-time">

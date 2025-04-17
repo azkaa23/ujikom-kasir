@@ -39,6 +39,11 @@
                     <div class="card-body">
                         @if (Auth::check())
                             @if (Auth::user()->role == 'admin')
+                            <div class="col-6">
+                                <a href="{{ route('produk.produk.export') }}"  class="btn btn-info">
+                                     Export Produk (.xlsx)
+                                </a>
+                            </div>
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <a class="btn btn-primary" href="{{ route('produk.create')}}">Tambah Produk</a>
                       </div>
